@@ -20,4 +20,4 @@ endif()
 add_subdirectory($ENV{GEODE_SDK} ${CMAKE_CURRENT_BINARY_DIR}/geode)
 
 # Mark geode.loader as external so CI can build without it being installed
-setup_geode_mod(${PROJECT_NAME} EXTERNALS geode.loader:>=5.0.0)
+setup_geode_mod(${PROJECT_NAME} EXTERNALS geode.loader)
