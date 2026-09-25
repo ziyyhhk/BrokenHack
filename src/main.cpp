@@ -7,15 +7,6 @@ using namespace geode::prelude;
 // Global state for the menu
 static bool g_menuOpen = false;
 
-// Simple feature toggles for the first category "Broken Hack"
-static bool g_noclip = false;
-static bool g_showHitboxes = false;
-static bool g_speedhack = false;
-static float g_speedValue = 1.0f;
-static bool g_practiceMusic = false;
-static bool g_hideAttempts = false;
-static bool g_autoClicker = false;
-
 // Toggle menu on TAB
 class $modify(CCKeyboardDispatcher) {
     bool dispatchKeyboardMSG(enumKeyCodes key, bool down, bool isKeyRepeat) {
