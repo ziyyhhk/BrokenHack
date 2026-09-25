@@ -4,79 +4,18 @@ using namespace geode::prelude;
 
 static BrokenHackMenu* s_instance = nullptr;
 
-// Colors matching MegaHack dark theme
-static ccColor3B const kHeaderPink = {200, 45, 85};
-static ccColor3B const kPanelDark  = {35, 35, 38};
-static ccColor3B const kRowDark    = {42, 42, 46};
-static ccColor3B const kTextLight  = {220, 220, 220};
-
-CCNode* BrokenHackMenu::makeWindow(
-    std::string const& title,
-    std::vector<std::string> const& rows,
-    float width,
-    float height
-) {
-    auto win = CCNode::create();
-    win->setContentSize({width, height});
-
-    // Panel background (solid dark)
-    auto bg = CCLayerColor::create(
-        {kPanelDark.r, kPanelDark.g, kPanelDark.b, 245},
-        width, height
-    );
-    win->addChild(bg);
-
-    // Thin border line at top of content
-    auto border = CCLayerColor::create({20, 20, 22, 255}, width, 1.f);
-    border->setPosition({0, height - 22.f});
-    win->addChild(border);
-
-    // Pink header bar
-    auto header = CCLayerColor::create(
-        {kHeaderPink.r, kHeaderPink.g, kHeaderPink.b, 255},
-        width, 20.f
-    );
-    header->setPosition({0, height - 20.f});
-    win->addChild(header);
-
-    // Category title (centered in header)
-    auto titleLbl = CCLabelBMFont::create(title.c_str(), "bigFont.fnt");
-    titleLbl->setScale(0.28f);
-    titleLbl->setPosition({width / 2.f, height - 10.f});
-    titleLbl->setColor({255, 255, 255});
-    win->addChild(titleLbl);
-
-    // Rows
-    float y = height - 34.f;
-    const float rowH = 16.f;
-
-    for (size_t i = 0; i < rows.size(); ++i) {
-        // Alternating subtle row background for readability
-        if (i % 2 == 0) {
-            auto rowBg = CCLayerColor::create(
-                {kRowDark.r, kRowDark.g, kRowDark.b, 180},
-                width - 4.f, rowH
-            );
-            rowBg->setPosition({2.f, y - rowH / 2.f});
-            win->addChild(rowBg);
-        }
-
-        auto label = CCLabelBMFont::create(rows[i].c_str(), "chatFont.fnt");
-        label->setScale(0.5f);
-        label->setAnchorPoint({0.f, 0.5f});
-        label->setPosition({6.f, y});
-        label->setColor(kTextLight);
-        win->addChild(label);
-
-        // Small checkbox square on the right
-        auto box = CCLayerColor::create({55, 55, 60, 255}, 10.f, 10.f);
-        box->setPosition({width - 16.f, y - 5.f});
-        win->addChild(box);
-
-        y -= rowH + 1.f;
-    }
-
-    return win;
+namespace bh {
+    bool autoUpdate = true;
+    bool search = false;
+    bool language = false;
+    bool theme = false;
+    bool rulesets = false;
+    bool altHotkey = false;
+    bool iconHotkey = false;
+    bool interfaceScale = false;
+    bool animations = true;
+    bool sortInterface = false;
+    bool miscellaneous = false;
 }
 
 bool BrokenHackMenu::init() {
@@ -87,130 +26,124 @@ bool BrokenHackMenu::init() {
 
     auto winSize = CCDirector::get()->getWinSize();
 
-    // Dim overlay
-    auto dim = CCLayerColor::create({0, 0, 0, 100});
+    // Dim background
+    auto dim = CCLayerColor::create({0, 0, 0, 130});
     dim->setContentSize(winSize);
     this->addChild(dim);
 
-    // ---- Category windows (MegaHack layout style) ----
-    // First window = Broken Hack (your main category with the options you wanted)
-    struct WindowDef {
-        std::string title;
-        std::vector<std::string> rows;
-        float w;
-        float h;
+    // Panel size - fits screen, not too big
+    const float panelW = 220.f;
+    const float panelH = 280.f;
+
+    // Centered container
+    auto container = CCNode::create();
+    container->setPosition({winSize.width / 2.f, winSize.height / 2.f});
+    this->addChild(container);
+
+    // Dark panel body
+    auto panel = CCLayerColor::create({32, 32, 36, 250}, panelW, panelH);
+    panel->setPosition({-panelW / 2.f, -panelH / 2.f});
+    container->addChild(panel);
+
+    // Pink header
+    auto header = CCLayerColor::create({200, 45, 85, 255}, panelW, 24.f);
+    header->setPosition({0, panelH - 24.f});
+    panel->addChild(header);
+
+    // Title
+    auto title = CCLabelBMFont::create("Broken Hack", "bigFont.fnt");
+    title->setScale(0.35f);
+    title->setPosition({panelW / 2.f, panelH - 12.f});
+    title->setColor({255, 255, 255});
+    panel->addChild(title);
+
+    // Close X button
+    auto closeSpr = CCSprite::createWithSpriteFrameName("GJ_closeBtn_001.png");
+    closeSpr->setScale(0.45f);
+    auto closeBtn = CCMenuItemSpriteExtra::create(
+        closeSpr, this, menu_selector(BrokenHackMenu::onClose)
+    );
+    auto closeMenu = CCMenu::createWithItem(closeBtn);
+    closeMenu->setPosition({panelW - 14.f, panelH - 12.f});
+    panel->addChild(closeMenu);
+
+    // Options
+    struct Opt {
+        const char* name;
+        bool* state;
+        int tag;
     };
 
-    std::vector<WindowDef> windows = {
-        // Column 1 - Broken Hack (main settings like MegaHack left panel)
-        {
-            "Broken Hack",
-            {
-                "Search",
-                "Auto-Update",
-                "Language: en-GB",
-                "Contribute Translations",
-                "Theme",
-                "Rulesets",
-                "Alt Hotkey",
-                "Icon Hotkey",
-                "Interface Scale 1.0x",
-                "Animations 250ms",
-                "Sort Interface",
-                "Miscellaneous",
-            },
-            150.f, 230.f
-        },
-        // Column 2 - Screenshot style sub panel
-        {
-            "Screenshot",
-            {
-                "Screenshot",
-                "Mode: Save & copy",
-            },
-            130.f, 70.f
-        },
-        // Column 3 - Speedhack
-        {
-            "Speedhack",
-            {
-                "Speed 1.0x",
-                "Enabled",
-                "Speedhack Audio",
-                "Classic Mode",
-            },
-            130.f, 100.f
-        },
-        // Column 4 - Bypass
-        {
-            "Bypass",
-            {
-                "Anti-Kick",
-                "Challenge Level",
-                "Keymaster",
-                "Main Levels",
-                "Music Customiser",
-                "Slider Limit",
-                "Text Length",
-                "Treasure Room",
-                "Unlock Icons",
-                "Unlock Shops",
-                "Unlock Vaults",
-            },
-            140.f, 210.f
-        },
-        // Column 5 - Creator
-        {
-            "Creator",
-            {
-                "Accurate Save",
-                "Copy Hack",
-                "Custom Object Bypass",
-                "Default Song Bypass",
-                "Editor Extension",
-                "Free Scroll",
-                "Hide UI",
-                "Level Edit",
-                "Multiple Editor Trails",
-                "No C Mark",
-                "Place Over",
-                "Smooth Editor Trail",
-                "Toolbox Button Bypass",
-                "Trigger Value Bypass",
-                "Verify Hack",
-            },
-            150.f, 270.f
-        },
+    std::vector<Opt> opts = {
+        {"Search",                  &bh::search,         1},
+        {"Auto-Update",             &bh::autoUpdate,     2},
+        {"Language: en-GB",         &bh::language,       3},
+        {"Theme",                   &bh::theme,          4},
+        {"Rulesets",                &bh::rulesets,       5},
+        {"Alt Hotkey",              &bh::altHotkey,      6},
+        {"Icon Hotkey",             &bh::iconHotkey,     7},
+        {"Interface Scale 1.0x",    &bh::interfaceScale, 8},
+        {"Animations 250ms",        &bh::animations,     9},
+        {"Sort Interface",          &bh::sortInterface, 10},
+        {"Miscellaneous",           &bh::miscellaneous, 11},
     };
 
-    // Layout: place windows in a horizontal row, centered
-    float totalW = 0.f;
-    float maxH = 0.f;
-    for (auto const& w : windows) {
-        totalW += w.w + 6.f;
-        if (w.h > maxH) maxH = w.h;
+    auto menu = CCMenu::create();
+    menu->setPosition({0, 0});
+    panel->addChild(menu);
+
+    float y = panelH - 40.f;
+    for (auto const& o : opts) {
+        // Label
+        auto lbl = CCLabelBMFont::create(o.name, "chatFont.fnt");
+        lbl->setScale(0.55f);
+        lbl->setAnchorPoint({0.f, 0.5f});
+        lbl->setPosition({10.f, y});
+        lbl->setColor({220, 220, 220});
+        panel->addChild(lbl);
+
+        // Toggle checkbox
+        auto off = CCSprite::createWithSpriteFrameName("GJ_checkOff_001.png");
+        auto on  = CCSprite::createWithSpriteFrameName("GJ_checkOn_001.png");
+        off->setScale(0.55f);
+        on->setScale(0.55f);
+
+        auto tog = CCMenuItemToggler::create(off, on, this, menu_selector(BrokenHackMenu::onToggle));
+        tog->setTag(o.tag);
+        tog->toggle(*o.state);
+        tog->setPosition({panelW - 18.f, y});
+        menu->addChild(tog);
+
+        y -= 20.f;
     }
 
-    float startX = (winSize.width - totalW) / 2.f;
-    float baseY  = (winSize.height - maxH) / 2.f;
-    float x = startX;
-
-    for (auto const& def : windows) {
-        auto node = makeWindow(def.title, def.rows, def.w, def.h);
-        // Align tops
-        node->setPosition({x, baseY + (maxH - def.h)});
-        this->addChild(node);
-        x += def.w + 6.f;
-    }
-
-    // Small close hint at bottom
-    auto hint = CCLabelBMFont::create("TAB = close", "chatFont.fnt");
-    hint->setScale(0.4f);
-    hint->setColor({120, 120, 120});
-    hint->setPosition({winSize.width / 2, 20.f});
-    this->addChild(hint);
+    // Footer
+    auto foot = CCLabelBMFont::create("TAB to close", "chatFont.fnt");
+    foot->setScale(0.4f);
+    foot->setColor({130, 130, 130});
+    foot->setPosition({panelW / 2.f, 12.f});
+    panel->addChild(foot);
 
     return true;
+}
+
+void BrokenHackMenu::onToggle(CCObject* sender) {
+    auto tog = static_cast<CCMenuItemToggler*>(sender);
+    int tag = tog->getTag();
+
+    switch (tag) {
+        case 1:  bh::search         = !bh::search;         break;
+        case 2:  bh::autoUpdate     = !bh::autoUpdate;     break;
+        case 3:  bh::language       = !bh::language;       break;
+        case 4:  bh::theme          = !bh::theme;          break;
+        case 5:  bh::rulesets       = !bh::rulesets;       break;
+        case 6:  bh::altHotkey      = !bh::altHotkey;      break;
+        case 7:  bh::iconHotkey     = !bh::iconHotkey;     break;
+        case 8:  bh::interfaceScale = !bh::interfaceScale; break;
+        case 9:  bh::animations     = !bh::animations;     break;
+        case 10: bh::sortInterface  = !bh::sortInterface;  break;
+        case 11: bh::miscellaneous  = !bh::miscellaneous;  break;
+    }
 }
 
 void BrokenHackMenu::keyBackClicked() {
@@ -236,19 +169,13 @@ void BrokenHackMenu::open() {
     if (s_instance) return;
     auto scene = CCDirector::get()->getRunningScene();
     if (!scene) return;
-
     s_instance = BrokenHackMenu::create();
-    if (s_instance) {
-        scene->addChild(s_instance, 999);
-    }
+    if (s_instance) scene->addChild(s_instance, 999);
 }
 
 void BrokenHackMenu::toggle() {
-    if (s_instance) {
-        s_instance->onClose(nullptr);
-    } else {
-        open();
-    }
+    if (s_instance) s_instance->onClose(nullptr);
+    else open();
 }
 
 bool BrokenHackMenu::isOpen() {
