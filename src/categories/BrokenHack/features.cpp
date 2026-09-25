@@ -4,20 +4,14 @@ using namespace geode::prelude;
 
 // ============================================
 // Category: Broken Hack
-// First category of the menu
+// Feature registry / common includes
+// Individual features live in their own files:
+//   noclip.cpp, speedhack.cpp, hitboxes.cpp, etc.
 // ============================================
 
 namespace brokenhack::features {
 
-// Feature toggles for "Broken Hack" category
-bool noclip = false;
-bool showHitboxes = false;
-bool speedhack = false;
-float speedValue = 1.0f;
-bool practiceMusic = false;
-bool hideAttempts = false;
-bool autoClicker = false;
-bool solidWaveTrail = false;
-bool startposSwitcher = false;
+// This file can hold shared category state later
+// For now individual features are in separate .cpp files
 
 } // namespace brokenhack::features
