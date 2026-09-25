@@ -9,8 +9,7 @@ protected:
     void keyBackClicked() override;
     void onClose(CCObject*);
 
-    // Builds one vertical category column
-    CCNode* createColumn(std::string const& title, std::vector<std::string> const& items, float width);
+    void onToggle(CCObject* sender);
 
 public:
     static BrokenHackMenu* create();
