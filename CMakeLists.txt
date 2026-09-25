@@ -6,7 +6,6 @@ set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 
 project(BrokenHack VERSION 1.0.0)
 
-# Add all source files inside src
 file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS src/*.cpp)
 
 add_library(${PROJECT_NAME} SHARED ${SOURCES})
@@ -19,5 +18,8 @@ endif()
 
 add_subdirectory($ENV{GEODE_SDK} ${CMAKE_CURRENT_BINARY_DIR}/geode)
 
-# Mark geode.loader as external so CI can build without it being installed
+# ImGui for proper mod menu UI (same tech as MegaHack / GDH / GDMegaOverlay)
+CPMAddPackage("gh:matcool/gd-imgui-cocos#b93f08ccef778a53ebba09b20c347f6a63980119")
+target_link_libraries(${PROJECT_NAME} imgui-cocos)
+
 setup_geode_mod(${PROJECT_NAME} EXTERNALS geode.loader)
