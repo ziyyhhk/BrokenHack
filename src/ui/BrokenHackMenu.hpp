@@ -9,7 +9,13 @@ protected:
     void keyBackClicked() override;
     void onClose(CCObject*);
 
-    void onToggle(CCObject* sender);
+    // One floating category window
+    CCNode* makeWindow(
+        std::string const& title,
+        std::vector<std::string> const& rows,
+        float width,
+        float height
+    );
 
 public:
     static BrokenHackMenu* create();
