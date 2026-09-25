@@ -1,0 +1,31 @@
+{
+    "geode": "4.0.0",
+    "gd": {
+        "win": "2.208",
+        "android": "2.208",
+        "mac": "2.208",
+        "ios": "2.208"
+    },
+    "id": "ziyyhhk.brokenhack",
+    "name": "BrokenHack",
+    "version": "1.0.0-alpha",
+    "developer": "ziyyhhk",
+    "description": "A free Geometry Dash hack menu. Press TAB to open.",
+    "links": {
+        "source": "https://github.com/ziyyhhk/BrokenHack"
+    },
+    "dependencies": {
+        "geode.loader": {
+            "version": ">=4.0.0",
+            "importance": "required"
+        }
+    },
+    "settings": {
+        "open-menu-key": {
+            "type": "keybind",
+            "name": "Open Menu",
+            "description": "Keybind to open/close the BrokenHack menu",
+            "default": "Tab"
+        }
+    }
+}
